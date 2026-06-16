@@ -57,11 +57,7 @@ async fn search_pokemon_translated_handler(
             .map_err(|err| reqwest_err(&err))?,
     );
 
-    let translation_type = if pokemon.is_legendary || pokemon.habitat == "Cave" {
-        "yoda"
-    } else {
-        "shakespeare"
-    };
+    let translation_type = select_translation_type(&pokemon);
 
     let url = format!("{TRANSLATION_API_BASE_URL}/{translation_type}");
     let body = json!({"text": pokemon.description});
@@ -83,8 +79,62 @@ async fn search_pokemon_translated_handler(
     Ok(Json(pokemon))
 }
 
+fn select_translation_type(pokemon: &PokemonDTO) -> &'static str {
+    if pokemon.is_legendary || pokemon.habitat == "cave" {
+        "yoda"
+    } else {
+        "shakespeare"
+    }
+}
+
 fn reqwest_err(e: &reqwest::Error) -> Response {
     e.status()
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
         .into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::dtos::pokemon_dto::PokemonDTO;
+
+    fn make_dto(is_legendary: bool, habitat: &str) -> PokemonDTO {
+        PokemonDTO {
+            name: "test".to_string(),
+            description: "A test pokemon.".to_string(),
+            habitat: habitat.to_string(),
+            is_legendary,
+        }
+    }
+
+    #[test]
+    fn test_translation_type_legendary_uses_yoda() {
+        assert_eq!(select_translation_type(&make_dto(true, "rare")), "yoda");
+    }
+
+    #[test]
+    fn test_translation_type_cave_habitat_uses_yoda() {
+        assert_eq!(select_translation_type(&make_dto(false, "cave")), "yoda");
+    }
+
+    #[test]
+    fn test_translation_type_legendary_and_cave_uses_yoda() {
+        assert_eq!(select_translation_type(&make_dto(true, "cave")), "yoda");
+    }
+
+    #[test]
+    fn test_translation_type_regular_pokemon_uses_shakespeare() {
+        assert_eq!(
+            select_translation_type(&make_dto(false, "grassland")),
+            "shakespeare"
+        );
+    }
+
+    #[test]
+    fn test_translation_type_unknown_habitat_uses_shakespeare() {
+        assert_eq!(
+            select_translation_type(&make_dto(false, "unknown")),
+            "shakespeare"
+        );
+    }
 }
