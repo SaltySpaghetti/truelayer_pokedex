@@ -26,4 +26,4 @@ cargo run
 
 ## Production improvements
 - Separate endpoints logic into a handler-service-repository pattern in order to better organize code and make the project more robust + Dependency injection using app State
-- Better error handling: right now PokeAPI and translation errors are just propagated as response which should ingested and transformed in custom error from the server
+- Better error handling: right now PokeAPI and translation errors are just propagated as response which should ingested and transformed in custom error by the server
