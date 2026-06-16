@@ -27,6 +27,8 @@ async fn main() {
         );
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5000").await.unwrap();
+
+    println!("Server starting!");
     axum::serve(listener, app).await.unwrap();
 }
 
